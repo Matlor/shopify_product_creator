@@ -1,0 +1,21 @@
+{
+	"name": "shopify_product_creator",
+	"version": "1.0.0",
+	"description": "",
+	"main": "index.js",
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1"
+	},
+	"author": "",
+	"license": "ISC",
+	"dependencies": {
+		"@apollo/client": "^3.9.11",
+		"@shopify/shopify-api": "^9.7.1",
+		"axios": "^1.6.8",
+		"chokidar": "^3.6.0",
+		"cross-fetch": "^4.0.0",
+		"dotenv": "^16.4.5",
+		"express": "^4.19.2",
+		"graphql": "^16.8.1"
+	}
+}
