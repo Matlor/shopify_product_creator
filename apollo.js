@@ -3,6 +3,7 @@ const fetch = require("cross-fetch");
 const dotenv = require("dotenv");
 const fs = require("fs");
 const path = require("path");
+const { exec } = require("child_process");
 
 dotenv.config();
 
@@ -53,7 +54,7 @@ const createProduct = async (productDetails) => {
 			mutation: CREATE_PRODUCT_MUTATION,
 			variables: { input: productDetails },
 		});
-		console.log("Product creation successful:", productResponse.data.productCreate);
+		//console.log("Product creation successful:", productResponse.data.productCreate);
 		return productResponse.data.productCreate;
 	} catch (error) {
 		console.error("Error creating product:", error);
@@ -101,7 +102,7 @@ const updateProductAndVariants = async (productId, productUpdates, variantUpdate
 			mutation: UPDATE_PRODUCT_MUTATION,
 			variables: { input: { id: encodeGlobalId(productId), ...productUpdates } },
 		});
-		console.log("Product update successful:", productResponse.data.productUpdate);
+		//console.log("Product update successful:", productResponse.data.productUpdate);
 	} catch (error) {
 		console.error("Error updating product:", error);
 	}
@@ -115,7 +116,7 @@ const updateProductAndVariants = async (productId, productUpdates, variantUpdate
 				mutation: UPDATE_VARIANT_MUTATION,
 				variables: { input: { id: encodedVariantId, price: variant.price } }, // Only include fields that are part of ProductVariantInput
 			});
-			console.log("Variant update successful:", variantResponse.data.productVariantUpdate);
+			//console.log("Variant update successful:", variantResponse.data.productVariantUpdate);
 		} catch (error) {
 			console.error("Error updating variant:", error);
 		}
@@ -236,7 +237,7 @@ const addMediaToProduct = async (productId, media) => {
 				media: media,
 			},
 		});
-		console.log("Media added to product:", response.data.productCreateMedia);
+		//console.log("Media added to product:", response.data.productCreateMedia);
 		return response.data.productCreateMedia;
 	} catch (error) {
 		console.error("Error adding media to product:", error);
@@ -253,9 +254,9 @@ const addPictureToProduct = async (productId, filePath) => {
 	};
 	try {
 		const stagedTargets = await createStagedUploads(file);
-		console.log(stagedTargets, "stagedTargets");
+		//console.log(stagedTargets, "stagedTargets");
 		const resourceUrl = await uploadFileToStagedURL(stagedTargets[0], file);
-		console.log(resourceUrl, "resourceUrl");
+		//console.log(resourceUrl, "resourceUrl");
 
 		// Add media to the product using the staged URL
 		//const productId = `gid://shopify/Product/${productId}`; // Replace with actual product ID
@@ -267,6 +268,8 @@ const addPictureToProduct = async (productId, filePath) => {
 			},
 		];
 		await addMediaToProduct(encodeGlobalId(productId), mediaInput);
+		console.log(productId);
+		printLabel(productId);
 	} catch (error) {
 		console.error("Error during file upload process:", error);
 	}
@@ -324,6 +327,30 @@ const getProduct = async (productId) => {
 	} catch (error) {
 		console.error("Error fetching product:", error);
 	}
+};
+
+const printLabel = async (productId) => {
+	// Define the path to your virtual environment activation script
+	const virtualEnvActivateScript =
+		"source /Users/mathiaslorenceau/Code/label_printer/myenv/bin/activate"; // Replace '/path/to/your/virtualenv/' with the actual path
+
+	// Define the Python script command
+	const pythonScript = "python /Users/mathiaslorenceau/Code/label_printer/print_label.py"; // Replace '/path/to/your/python_script.py' with the actual path
+
+	console.log(productId, "id passed to python");
+
+	// Execute the activation script followed by the Python script with the ID as an argument
+	exec(`${virtualEnvActivateScript} && ${pythonScript} ${productId}`, (error, stdout, stderr) => {
+		if (error) {
+			console.error(`Error: ${error.message}`);
+			return;
+		}
+		if (stderr) {
+			console.error(`stderr: ${stderr}`);
+			return;
+		}
+		console.log(`Output: ${stdout}`);
+	});
 };
 
 // ------------------------------------------------------------ RUN ------------------------------------------------------------
