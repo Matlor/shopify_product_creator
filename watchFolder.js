@@ -20,7 +20,7 @@ function refreshShopifyTab() {
 
 // Folder to watch
 const folderToWatch =
-	"/Users/mathiaslorenceau/Documents/entrepreneurial_projects/vintage_collective/foto_station";
+	"/Users/mathiaslorenceau/Documents/entrepreneurial_projects/vintage_collective/foto_station/foto_station";
 
 const watcher = chokidar.watch(folderToWatch, {
 	ignored: /^\./,
@@ -52,7 +52,7 @@ watcher
 			const createdProduct = await createProduct(newProductDetails);
 
 			if (createdProduct && createdProduct.product) {
-				console.log("Product created successfully:", createdProduct.product.id);
+				console.log("Product id created successfully:", createdProduct.product.id);
 
 				// Pic
 				const productId = extractNumericId(createdProduct.product.id);
