@@ -10,7 +10,19 @@ const CREATE_PRODUCT_MUTATION = gql`
 				productType
 				vendor
 				tags
+				publishedAt # Ensure this field is included
 			}
+			userErrors {
+				field
+				message
+			}
+		}
+	}
+`;
+
+const PUBLISHABLE_PUBLISH_MUTATION = gql`
+	mutation publishablePublish($id: ID!, $input: [PublicationInput!]!) {
+		publishablePublish(id: $id, input: $input) {
 			userErrors {
 				field
 				message
@@ -29,6 +41,7 @@ const UPDATE_PRODUCT_MUTATION = gql`
 				productType
 				vendor
 				tags
+				publishedAt # Ensure this field is included
 			}
 			userErrors {
 				field
@@ -104,6 +117,7 @@ const CREATE_PRODUCT_MEDIA = gql`
 
 module.exports = {
 	CREATE_PRODUCT_MUTATION,
+	PUBLISHABLE_PUBLISH_MUTATION,
 	UPDATE_PRODUCT_MUTATION,
 	UPDATE_VARIANT_MUTATION,
 	STAGED_UPLOADS_CREATE,

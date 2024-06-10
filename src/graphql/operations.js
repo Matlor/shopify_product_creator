@@ -5,12 +5,13 @@ const fetch = require("cross-fetch");
 const client = require("./client");
 const {
 	CREATE_PRODUCT_MUTATION,
+	PUBLISHABLE_PUBLISH_MUTATION,
 	UPDATE_PRODUCT_MUTATION,
 	UPDATE_VARIANT_MUTATION,
 	STAGED_UPLOADS_CREATE,
 	CREATE_PRODUCT_MEDIA,
 } = require("./mutations");
-const { GET_PRODUCT_QUERY } = require("./queries");
+const { GET_PRODUCT_QUERY, GET_PUBLICATIONS_QUERY } = require("./queries");
 const { encodeGlobalId, encodeVariantId, extractNumericId } = require("./helpers");
 
 const uploadFileToStagedURL = async (stagedTarget, file) => {
@@ -50,6 +51,20 @@ const createProduct = async (productDetails) => {
 		return { success: true, product: productResponse.data.productCreate };
 	} catch (error) {
 		console.error("Error creating product:", error);
+		return { success: false, error };
+	}
+};
+
+const publishProduct = async (productId, publicationIds) => {
+	try {
+		const input = publicationIds.map((publicationId) => ({ publicationId }));
+		const publishResponse = await client.mutate({
+			mutation: PUBLISHABLE_PUBLISH_MUTATION,
+			variables: { id: productId, input },
+		});
+		return { success: true, publication: publishResponse.data.publishablePublish };
+	} catch (error) {
+		console.error("Error publishing product:", error);
 		return { success: false, error };
 	}
 };
@@ -176,11 +191,39 @@ const getProduct = async (productId) => {
 	}
 };
 
+const getPublications = async () => {
+	try {
+		const response = await client.query({
+			query: GET_PUBLICATIONS_QUERY,
+		});
+		return response.data.publications.edges.map((edge) => ({
+			id: edge.node.id,
+			name: edge.node.name,
+		}));
+	} catch (error) {
+		console.error("Error fetching publications:", error);
+		return [];
+	}
+};
+
+const publishProductToPOS = async (productId) => {
+	const publicationId = process.env.PUBLICATION_POINT_OF_SALE;
+	console.log("INSIDE POS OPERATION");
+	console.log(productId, "productId");
+	console.log(encodeGlobalId(productId), "encodeGlobalId(productId)");
+	console.log(publicationId, "publicationId");
+
+	return await publishProduct(productId, [publicationId]);
+};
+
 module.exports = {
 	uploadFileToStagedURL,
 	createProduct,
+	publishProduct,
 	updateProductAndVariants,
 	createStagedUploads,
 	addPictureToProduct,
 	getProduct,
+	getPublications,
+	publishProductToPOS,
 };

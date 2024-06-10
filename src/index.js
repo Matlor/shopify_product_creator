@@ -1,5 +1,10 @@
 const chokidar = require("chokidar");
-const { createProduct, addPictureToProduct } = require("./graphql/operations");
+const {
+	createProduct,
+	addPictureToProduct,
+	publishProductToPOS,
+	publishProduct,
+} = require("./graphql/operations");
 const { extractNumericId } = require("./graphql/helpers");
 const printLabel = require("./labelprinter/print");
 const refreshShopifyTab = require("./scripts/refresh");
@@ -27,20 +32,47 @@ watcher
 			if (!createdProductResult.success) {
 				console.error("Failed to create product:", createdProductResult.error);
 				return;
-			} else {
-				// ---------- add picture ----------
-				const productId = extractNumericId(createdProductResult.product.product.id);
-				const addPicResult = await addPictureToProduct(productId, filePath);
-				if (!addPicResult.success) {
-					console.error("Failed to add picture to product:", addPicResult.error);
-					return;
-				} else {
-					// ---------- delete, refresh, print ----------
-					deleteFile(filePath);
-					refreshShopifyTab();
-					//printLabel(productId);
-				}
 			}
+
+			console.log(createdProductResult, "createdProductResult");
+			const productId = createdProductResult.product.product.id;
+
+			// ---------- publish product to POS ----------
+			const publishPOSResult = await publishProductToPOS(productId);
+			if (!publishPOSResult.success) {
+				console.error("Failed to publish product to POS:", publishPOSResult.error);
+				return;
+			}
+			console.log(publishPOSResult.publication, "publishPOSResult.publication");
+
+			// ---------- publish product to other channels ----------
+			/* 	const otherPublicationIds = [
+				process.env.PUBLICATION_ONLINE_STORE,
+				process.env.PUBLICATION_SHOP,
+			];
+			const publishOtherResult = await publishProduct(productId, otherPublicationIds);
+			if (!publishOtherResult.success) {
+				console.error(
+					"Failed to publish product to other channels:",
+					publishOtherResult.error
+				);
+				return;
+			}
+ */
+			// ---------- add picture ----------
+			console.log(productId, "productId");
+			const numericProductId = extractNumericId(productId);
+			console.log(numericProductId, "numericProductId");
+			const addPicResult = await addPictureToProduct(numericProductId, filePath);
+			if (!addPicResult.success) {
+				console.error("Failed to add picture to product:", addPicResult.error);
+				return;
+			}
+
+			// ---------- delete, refresh, print ----------
+			deleteFile(filePath);
+			refreshShopifyTab();
+			//printLabel(numericProductId);
 		} catch (error) {
 			console.error("Error processing file:", error);
 		}

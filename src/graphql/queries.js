@@ -31,6 +31,20 @@ const GET_PRODUCT_QUERY = gql`
 	}
 `;
 
+const GET_PUBLICATIONS_QUERY = gql`
+	query {
+		publications(first: 10) {
+			edges {
+				node {
+					id
+					name
+				}
+			}
+		}
+	}
+`;
+
 module.exports = {
 	GET_PRODUCT_QUERY,
+	GET_PUBLICATIONS_QUERY,
 };
