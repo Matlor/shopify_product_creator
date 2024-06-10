@@ -10,7 +10,16 @@ const CREATE_PRODUCT_MUTATION = gql`
 				productType
 				vendor
 				tags
-				publishedAt # Ensure this field is included
+				publishedAt
+				variants(first: 1) {
+					edges {
+						node {
+							id
+							price
+							barcode
+						}
+					}
+				}
 			}
 			userErrors {
 				field
@@ -57,6 +66,7 @@ const UPDATE_VARIANT_MUTATION = gql`
 			productVariant {
 				id
 				price
+				barcode
 			}
 			userErrors {
 				field

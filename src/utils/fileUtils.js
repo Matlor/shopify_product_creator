@@ -1,5 +1,6 @@
 const fs = require("fs");
 const path = require("path");
+const randomatic = require("randomatic");
 
 const isValidImage = (filePath, validImageTypes) => {
 	const ext = path.extname(filePath).toLowerCase();
@@ -16,7 +17,14 @@ const deleteFile = (filePath) => {
 	});
 };
 
+const generateShortUniqueId = () => {
+	return randomatic("0", 8);
+};
+
+module.exports = generateShortUniqueId;
+
 module.exports = {
 	isValidImage,
 	deleteFile,
+	generateShortUniqueId,
 };

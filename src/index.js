@@ -1,15 +1,17 @@
 const chokidar = require("chokidar");
 const {
 	createProduct,
+	updateVariant,
 	addPictureToProduct,
 	publishProductToPOS,
 	publishProduct,
 } = require("./graphql/operations");
-const { extractNumericId } = require("./graphql/helpers");
+const { extractNumericId, encodeGlobalId } = require("./graphql/helpers");
 const printLabel = require("./labelprinter/print");
 const refreshShopifyTab = require("./scripts/refresh");
 const { isValidImage, deleteFile } = require("./utils/fileUtils");
 const { defaultProduct } = require("./graphql/shopifyProductDetails");
+const { generateShortUniqueId } = require("./utils/fileUtils");
 
 const FOLDER_TO_WATCH =
 	"/Users/mathiaslorenceau/Documents/entrepreneurial_projects/vintage_collective/foto_station/foto_station";
@@ -34,23 +36,40 @@ watcher
 				return;
 			}
 
-			console.log(createdProductResult, "createdProductResult");
-			const productId = createdProductResult.product.product.id;
+			const productId = createdProductResult.product.id;
+			console.log("Created product ID:", productId);
+
+			// ---------- update product variant with barcode ----------
+
+			const variantId = createdProductResult.product.variants.edges[0].node.id;
+			console.log(extractNumericId(variantId), "variantId");
+
+			const barcode = generateShortUniqueId();
+
+			const updateVariantResult = await updateVariant(extractNumericId(variantId), {
+				barcode,
+			});
+			if (!updateVariantResult.success) {
+				console.error("Failed to update variant with barcode:", updateVariantResult.error);
+				return;
+			}
 
 			// ---------- publish product to POS ----------
-			const publishPOSResult = await publishProductToPOS(productId);
+			const publishPOSResult = await publishProductToPOS(extractNumericId(productId));
 			if (!publishPOSResult.success) {
 				console.error("Failed to publish product to POS:", publishPOSResult.error);
 				return;
 			}
-			console.log(publishPOSResult.publication, "publishPOSResult.publication");
 
 			// ---------- publish product to other channels ----------
-			/* 	const otherPublicationIds = [
+			const otherPublicationIds = [
 				process.env.PUBLICATION_ONLINE_STORE,
 				process.env.PUBLICATION_SHOP,
 			];
-			const publishOtherResult = await publishProduct(productId, otherPublicationIds);
+			const publishOtherResult = await publishProduct(
+				encodeGlobalId(productId),
+				otherPublicationIds
+			);
 			if (!publishOtherResult.success) {
 				console.error(
 					"Failed to publish product to other channels:",
@@ -58,11 +77,9 @@ watcher
 				);
 				return;
 			}
- */
+
 			// ---------- add picture ----------
-			console.log(productId, "productId");
 			const numericProductId = extractNumericId(productId);
-			console.log(numericProductId, "numericProductId");
 			const addPicResult = await addPictureToProduct(numericProductId, filePath);
 			if (!addPicResult.success) {
 				console.error("Failed to add picture to product:", addPicResult.error);
@@ -72,7 +89,7 @@ watcher
 			// ---------- delete, refresh, print ----------
 			deleteFile(filePath);
 			refreshShopifyTab();
-			//printLabel(numericProductId);
+			printLabel(barcode);
 		} catch (error) {
 			console.error("Error processing file:", error);
 		}

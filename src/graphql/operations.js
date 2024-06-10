@@ -2,6 +2,7 @@ const fs = require("fs");
 const path = require("path");
 const FormData = require("form-data");
 const fetch = require("cross-fetch");
+const { v4: uuidv4 } = require("uuid");
 const client = require("./client");
 const {
 	CREATE_PRODUCT_MUTATION,
@@ -48,7 +49,12 @@ const createProduct = async (productDetails) => {
 			mutation: CREATE_PRODUCT_MUTATION,
 			variables: { input: productDetails },
 		});
-		return { success: true, product: productResponse.data.productCreate };
+
+		if (productResponse.data.productCreate.userErrors.length) {
+			return { success: false, error: productResponse.data.productCreate.userErrors };
+		}
+
+		return { success: true, product: productResponse.data.productCreate.product };
 	} catch (error) {
 		console.error("Error creating product:", error);
 		return { success: false, error };
@@ -56,12 +62,14 @@ const createProduct = async (productDetails) => {
 };
 
 const publishProduct = async (productId, publicationIds) => {
+	console.log(productId, "inside publish, id");
 	try {
 		const input = publicationIds.map((publicationId) => ({ publicationId }));
 		const publishResponse = await client.mutate({
 			mutation: PUBLISHABLE_PUBLISH_MUTATION,
-			variables: { id: productId, input },
+			variables: { id: encodeGlobalId(productId), input },
 		});
+		console.log(publishResponse, "publishResponse");
 		return { success: true, publication: publishResponse.data.publishablePublish };
 	} catch (error) {
 		console.error("Error publishing product:", error);
@@ -69,24 +77,38 @@ const publishProduct = async (productId, publicationIds) => {
 	}
 };
 
-const updateProductAndVariants = async (productId, productUpdates, variantUpdates) => {
+const updateProduct = async (productId, productUpdates) => {
 	try {
-		await client.mutate({
+		const response = await client.mutate({
 			mutation: UPDATE_PRODUCT_MUTATION,
 			variables: { input: { id: encodeGlobalId(productId), ...productUpdates } },
 		});
 
-		for (const variant of variantUpdates) {
-			const encodedVariantId = encodeVariantId(variant.id);
-
-			await client.mutate({
-				mutation: UPDATE_VARIANT_MUTATION,
-				variables: { input: { id: encodedVariantId, price: variant.price } },
-			});
+		if (response.data.productUpdate.userErrors.length) {
+			return { success: false, error: response.data.productUpdate.userErrors };
 		}
-		return { success: true };
+
+		return { success: true, product: response.data.productUpdate.product };
 	} catch (error) {
-		console.error("Error updating product or variant:", error);
+		console.error("Error updating product:", error);
+		return { success: false, error };
+	}
+};
+
+const updateVariant = async (variantId, variantUpdates) => {
+	try {
+		const response = await client.mutate({
+			mutation: UPDATE_VARIANT_MUTATION,
+			variables: { input: { id: encodeVariantId(variantId), ...variantUpdates } },
+		});
+
+		if (response.data.productVariantUpdate.userErrors.length) {
+			return { success: false, error: response.data.productVariantUpdate.userErrors };
+		}
+
+		return { success: true, variant: response.data.productVariantUpdate.productVariant };
+	} catch (error) {
+		console.error("Error updating variant:", error);
 		return { success: false, error };
 	}
 };
@@ -210,7 +232,6 @@ const publishProductToPOS = async (productId) => {
 	const publicationId = process.env.PUBLICATION_POINT_OF_SALE;
 	console.log("INSIDE POS OPERATION");
 	console.log(productId, "productId");
-	console.log(encodeGlobalId(productId), "encodeGlobalId(productId)");
 	console.log(publicationId, "publicationId");
 
 	return await publishProduct(productId, [publicationId]);
@@ -220,7 +241,8 @@ module.exports = {
 	uploadFileToStagedURL,
 	createProduct,
 	publishProduct,
-	updateProductAndVariants,
+	updateProduct,
+	updateVariant,
 	createStagedUploads,
 	addPictureToProduct,
 	getProduct,

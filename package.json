@@ -16,6 +16,8 @@
 		"cross-fetch": "^4.0.0",
 		"dotenv": "^16.4.5",
 		"express": "^4.19.2",
-		"graphql": "^16.8.1"
+		"graphql": "^16.8.1",
+		"randomatic": "^3.1.1",
+		"uuid": "^10.0.0"
 	}
 }
