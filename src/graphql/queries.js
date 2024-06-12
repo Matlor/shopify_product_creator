@@ -44,7 +44,21 @@ const GET_PUBLICATIONS_QUERY = gql`
 	}
 `;
 
+const GET_LOCATIONS_QUERY = gql`
+	query GetLocations {
+		locations(first: 5) {
+			edges {
+				node {
+					id
+					name
+				}
+			}
+		}
+	}
+`;
+
 module.exports = {
 	GET_PRODUCT_QUERY,
 	GET_PUBLICATIONS_QUERY,
+	GET_LOCATIONS_QUERY,
 };

@@ -67,6 +67,52 @@ const UPDATE_VARIANT_MUTATION = gql`
 				id
 				price
 				barcode
+				inventoryPolicy
+				inventoryQuantity
+				inventoryItem {
+					id
+					sku
+					tracked
+				}
+				inventoryQuantity
+				availableForSale
+				createdAt
+				updatedAt
+			}
+			userErrors {
+				field
+				message
+			}
+		}
+	}
+`;
+
+const INVENTORY_ITEM_UPDATE_MUTATION = gql`
+	mutation inventoryItemUpdate($id: ID!, $input: InventoryItemUpdateInput!) {
+		inventoryItemUpdate(id: $id, input: $input) {
+			inventoryItem {
+				id
+				tracked
+			}
+			userErrors {
+				field
+				message
+			}
+		}
+	}
+`;
+
+const INVENTORY_ADJUST_QUANTITIES_MUTATION = gql`
+	mutation inventoryAdjustQuantities($input: InventoryAdjustQuantitiesInput!) {
+		inventoryAdjustQuantities(input: $input) {
+			inventoryAdjustmentGroup {
+				createdAt
+				reason
+				referenceDocumentUri
+				changes {
+					name
+					delta
+				}
 			}
 			userErrors {
 				field
@@ -129,6 +175,8 @@ module.exports = {
 	CREATE_PRODUCT_MUTATION,
 	PUBLISHABLE_PUBLISH_MUTATION,
 	UPDATE_PRODUCT_MUTATION,
+	INVENTORY_ADJUST_QUANTITIES_MUTATION,
+	INVENTORY_ITEM_UPDATE_MUTATION,
 	UPDATE_VARIANT_MUTATION,
 	STAGED_UPLOADS_CREATE,
 	CREATE_PRODUCT_MEDIA,

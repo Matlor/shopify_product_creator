@@ -8,6 +8,8 @@ const {
 	CREATE_PRODUCT_MUTATION,
 	PUBLISHABLE_PUBLISH_MUTATION,
 	UPDATE_PRODUCT_MUTATION,
+	INVENTORY_ADJUST_QUANTITIES_MUTATION,
+	INVENTORY_ITEM_UPDATE_MUTATION,
 	UPDATE_VARIANT_MUTATION,
 	STAGED_UPLOADS_CREATE,
 	CREATE_PRODUCT_MEDIA,
@@ -109,6 +111,56 @@ const updateVariant = async (variantId, variantUpdates) => {
 		return { success: true, variant: response.data.productVariantUpdate.productVariant };
 	} catch (error) {
 		console.error("Error updating variant:", error);
+		return { success: false, error };
+	}
+};
+
+const updateInventoryItem = async (inventoryItemId) => {
+	try {
+		console.log({ id: inventoryItemId, input: { tracked: true } }, "||||||||||||||||||");
+		const response = await client.mutate({
+			mutation: INVENTORY_ITEM_UPDATE_MUTATION,
+			variables: { id: inventoryItemId, input: { tracked: true } },
+		});
+
+		if (response.data.inventoryItemUpdate.userErrors.length) {
+			return { success: false, error: response.data.inventoryItemUpdate.userErrors };
+		}
+
+		return { success: true, inventoryItem: response.data.inventoryItemUpdate.inventoryItem };
+	} catch (error) {
+		console.error("Error updating inventory item:", error);
+		return { success: false, error };
+	}
+};
+
+const adjustInventory = async (inventoryItemId, locationId, availableDelta) => {
+	try {
+		const response = await client.mutate({
+			mutation: INVENTORY_ADJUST_QUANTITIES_MUTATION,
+			variables: {
+				input: {
+					reason: "correction", // Example reason
+					name: "available", // Inventory quantity name
+					referenceDocumentUri: "logistics://some.warehouse/take/2023-01/13", // Example reference document URI
+					changes: [
+						{
+							delta: availableDelta,
+							inventoryItemId,
+							locationId,
+						},
+					],
+				},
+			},
+		});
+		console.log(response.data.inventoryAdjustQuantities.inventoryAdjustmentGroup.changes);
+		if (response.data.inventoryAdjustQuantities.userErrors.length) {
+			return { success: false, error: response.data.inventoryAdjustQuantities.userErrors };
+		}
+
+		return { success: true };
+	} catch (error) {
+		console.error("Error adjusting inventory:", error);
 		return { success: false, error };
 	}
 };
@@ -243,6 +295,8 @@ module.exports = {
 	publishProduct,
 	updateProduct,
 	updateVariant,
+	adjustInventory,
+	updateInventoryItem,
 	createStagedUploads,
 	addPictureToProduct,
 	getProduct,

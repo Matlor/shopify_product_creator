@@ -1,9 +1,9 @@
 const { exec } = require("child_process");
 
-const printLabel = (productId) => {
+const printLabel = (productId, price) => {
 	const virtualEnvActivateScript =
 		"source /Users/mathiaslorenceau/Code/label_printer/myenv/bin/activate";
-	const pythonScript = `python /Users/mathiaslorenceau/Code/label_printer/print_label.py ${productId}`;
+	const pythonScript = `python /Users/mathiaslorenceau/Code/label_printer/main.py ${productId} ${price}`;
 
 	exec(`${virtualEnvActivateScript} && ${pythonScript}`, (error, stdout, stderr) => {
 		if (error) {

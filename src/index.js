@@ -5,13 +5,16 @@ const {
 	addPictureToProduct,
 	publishProductToPOS,
 	publishProduct,
+	adjustInventory,
+	updateInventoryItem,
+	getProductInventoryDetails,
+	getLocationId,
 } = require("./graphql/operations");
 const { extractNumericId, encodeGlobalId } = require("./graphql/helpers");
 const printLabel = require("./labelprinter/print");
 const refreshShopifyTab = require("./scripts/refresh");
-const { isValidImage, deleteFile } = require("./utils/fileUtils");
+const { isValidImage, deleteFile, generateShortUniqueId } = require("./utils/fileUtils");
 const { defaultProduct } = require("./graphql/shopifyProductDetails");
-const { generateShortUniqueId } = require("./utils/fileUtils");
 
 const FOLDER_TO_WATCH =
 	"/Users/mathiaslorenceau/Documents/entrepreneurial_projects/vintage_collective/foto_station/foto_station";
@@ -23,7 +26,6 @@ const watcher = chokidar.watch(FOLDER_TO_WATCH, {
 
 watcher
 	.on("add", async (filePath) => {
-		console.log("before valid image");
 		if (!isValidImage(filePath, [".jpg", ".jpeg", ".png", ".gif"])) {
 			return;
 		}
@@ -37,20 +39,48 @@ watcher
 			}
 
 			const productId = createdProductResult.product.id;
-			console.log("Created product ID:", productId);
 
-			// ---------- update product variant with barcode ----------
-
+			// ---------- update product variant with barcode and price ----------
 			const variantId = createdProductResult.product.variants.edges[0].node.id;
-			console.log(extractNumericId(variantId), "variantId");
 
 			const barcode = generateShortUniqueId();
+			const newPrice = "120"; // Example new price
 
 			const updateVariantResult = await updateVariant(extractNumericId(variantId), {
 				barcode,
+				price: newPrice,
 			});
+
 			if (!updateVariantResult.success) {
-				console.error("Failed to update variant with barcode:", updateVariantResult.error);
+				console.error(
+					"Failed to update variant with barcode and price:",
+					updateVariantResult.error
+				);
+				return;
+			}
+
+			const price = updateVariantResult.variant.price;
+			const inventoryItemId = updateVariantResult.variant.inventoryItem.id;
+
+			// ---------- update inventory item ----------
+			const updateInventoryItemResult = await updateInventoryItem(inventoryItemId);
+			if (!updateInventoryItemResult.success) {
+				console.error("Failed to update inventory item:", updateInventoryItemResult.error);
+				return;
+			}
+
+			// ---------- get location ID ----------
+			const locationId = "gid://shopify/Location/92197388621";
+
+			// ---------- adjust inventory quantity ----------
+			const availableDelta = 1; // Example inventory adjustment
+			const adjustInventoryResult = await adjustInventory(
+				inventoryItemId,
+				locationId,
+				availableDelta
+			);
+			if (!adjustInventoryResult.success) {
+				console.error("Failed to adjust inventory quantity:", adjustInventoryResult.error);
 				return;
 			}
 
@@ -89,7 +119,7 @@ watcher
 			// ---------- delete, refresh, print ----------
 			deleteFile(filePath);
 			refreshShopifyTab();
-			printLabel(barcode);
+			printLabel(barcode, price);
 		} catch (error) {
 			console.error("Error processing file:", error);
 		}
