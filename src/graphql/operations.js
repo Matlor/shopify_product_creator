@@ -64,14 +64,12 @@ const createProduct = async (productDetails) => {
 };
 
 const publishProduct = async (productId, publicationIds) => {
-	console.log(productId, "inside publish, id");
 	try {
 		const input = publicationIds.map((publicationId) => ({ publicationId }));
 		const publishResponse = await client.mutate({
 			mutation: PUBLISHABLE_PUBLISH_MUTATION,
 			variables: { id: encodeGlobalId(productId), input },
 		});
-		console.log(publishResponse, "publishResponse");
 		return { success: true, publication: publishResponse.data.publishablePublish };
 	} catch (error) {
 		console.error("Error publishing product:", error);
@@ -117,7 +115,6 @@ const updateVariant = async (variantId, variantUpdates) => {
 
 const updateInventoryItem = async (inventoryItemId) => {
 	try {
-		console.log({ id: inventoryItemId, input: { tracked: true } }, "||||||||||||||||||");
 		const response = await client.mutate({
 			mutation: INVENTORY_ITEM_UPDATE_MUTATION,
 			variables: { id: inventoryItemId, input: { tracked: true } },
@@ -153,7 +150,6 @@ const adjustInventory = async (inventoryItemId, locationId, availableDelta) => {
 				},
 			},
 		});
-		console.log(response.data.inventoryAdjustQuantities.inventoryAdjustmentGroup.changes);
 		if (response.data.inventoryAdjustQuantities.userErrors.length) {
 			return { success: false, error: response.data.inventoryAdjustQuantities.userErrors };
 		}
@@ -282,9 +278,6 @@ const getPublications = async () => {
 
 const publishProductToPOS = async (productId) => {
 	const publicationId = process.env.PUBLICATION_POINT_OF_SALE;
-	console.log("INSIDE POS OPERATION");
-	console.log(productId, "productId");
-	console.log(publicationId, "publicationId");
 
 	return await publishProduct(productId, [publicationId]);
 };

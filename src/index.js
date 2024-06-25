@@ -15,9 +15,26 @@ const printLabel = require("./labelprinter/print");
 const refreshShopifyTab = require("./scripts/refresh");
 const { isValidImage, deleteFile, generateShortUniqueId } = require("./utils/fileUtils");
 const { defaultProduct } = require("./graphql/shopifyProductDetails");
+//const fs = require("fs");
+
+const readline = require("readline");
 
 const FOLDER_TO_WATCH =
-	"/Users/mathiaslorenceau/Documents/entrepreneurial_projects/vintage_collective/foto_station/foto_station";
+	"/Users/mathiaslorenceau/Documents/entrepreneurial_projects/vintage_collective/foto_station/foto_station/capture";
+
+function promptForPrice() {
+	return new Promise((resolve, reject) => {
+		const rl = readline.createInterface({
+			input: process.stdin,
+			output: process.stdout,
+		});
+
+		rl.question("Enter the price for the item: ", (price) => {
+			rl.close();
+			resolve(Number(price)); // Resolve the promise with the price
+		});
+	});
+}
 
 const watcher = chokidar.watch(FOLDER_TO_WATCH, {
 	ignored: /^\./,
@@ -29,6 +46,9 @@ watcher
 		if (!isValidImage(filePath, [".jpg", ".jpeg", ".png", ".gif"])) {
 			return;
 		}
+
+		const newPrice = await promptForPrice();
+		// Example new price
 
 		try {
 			// ---------- create product ----------
@@ -44,7 +64,6 @@ watcher
 			const variantId = createdProductResult.product.variants.edges[0].node.id;
 
 			const barcode = generateShortUniqueId();
-			const newPrice = "120"; // Example new price
 
 			const updateVariantResult = await updateVariant(extractNumericId(variantId), {
 				barcode,

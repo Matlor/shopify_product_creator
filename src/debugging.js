@@ -1,4 +1,11 @@
-const { GET_LOCATIONS_QUERY } = require("./graphql/queries");
+const test = () => {
+	console.log("The test function has been triggered successfully!");
+	alert("The test function is operational.");
+	// End Generation  Here
+};
+module.exports = test;
+
+/* const { GET_LOCATIONS_QUERY } = require("./graphql/queries");
 const client = require("./graphql/client");
 
 const getLocations = async () => {
@@ -26,7 +33,7 @@ const main = async () => {
 	}
 };
 
-main();
+main(); */
 // ----------------------------------
 
 /* const { ApolloClient, InMemoryCache, gql } = require("@apollo/client/core");
