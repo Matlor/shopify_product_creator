@@ -1,10 +1,13 @@
-const test = () => {
-	console.log("The test function has been triggered successfully!");
-	alert("The test function is operational.");
-	// End Generation  Here
-};
-module.exports = test;
+const fs = require("fs");
+const path =
+	"/Users/mathiaslorenceau/Documents/entrepreneurial_projects/Etage/foto_station/foto_station/C4B15520-EBEE-4BFB-839D-D528249C09A9 2024-04-23 at 16.03.38.jpeg";
 
+const test = async () => {
+	const data = fs.readFileSync(path);
+	return data.toString("base64").slice(0, 100); // Return a small part of the picture data
+};
+
+module.exports = test;
 /* const { GET_LOCATIONS_QUERY } = require("./graphql/queries");
 const client = require("./graphql/client");
 

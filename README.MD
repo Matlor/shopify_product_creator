@@ -1,3 +1,16 @@
+How to run:
+
+run backend that creates shopify entries based on watched folder:
+node watchFolder.js
+
+run frontend:
+npm run electron
+
+Run with hot reload:
+open the project "runner" and run it. It watches the UI or src folder for changes
+
+---
+
 Here I can see all the mutations that are possible apparently
 https://shopify.dev/docs/api/admin-graphql/2024-01/objects/Product#mutations
 
