@@ -2,7 +2,13 @@ const { contextBridge, ipcRenderer } = require("electron");
 
 // Expose protected methods that allow the renderer process to use
 // the ipcRenderer without exposing the entire ipcRenderer object
-contextBridge.exposeInMainWorld("electronAPI", {
+contextBridge.exposeInMainWorld("electron", {
 	getProduct: (productId) => ipcRenderer.invoke("get-product", productId),
-	getFile: () => ipcRenderer.invoke("get-file"),
+
+	//---
+	getImages: () => ipcRenderer.invoke("get-images"),
+	getEntries: () => ipcRenderer.invoke("get-entries"),
+	saveEntries: (entries) => ipcRenderer.invoke("save-entries", entries),
+
+	createShopifyEntries: (filePaths) => ipcRenderer.invoke("create-shopify-entries", filePaths),
 });

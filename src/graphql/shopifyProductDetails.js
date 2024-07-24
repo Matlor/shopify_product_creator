@@ -1,11 +1,11 @@
 const { generateShortUniqueId } = require("../utils/fileUtils");
 
 const defaultProduct = {
-	title: "Title Placeholder",
-	descriptionHtml: "<p>Description Placeholder</p>",
+	title: "",
+	descriptionHtml: "",
 	productType: "Product Type Placeholder",
-	vendor: "Vendor Placeholder",
-	tags: ["Tags Placeholder"],
+	vendor: "Étage",
+	tags: [""],
 };
 
 module.exports = {

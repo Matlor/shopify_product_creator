@@ -1,13 +1,48 @@
 const fs = require("fs");
 const path =
-	"/Users/mathiaslorenceau/Documents/entrepreneurial_projects/Etage/foto_station/foto_station/C4B15520-EBEE-4BFB-839D-D528249C09A9 2024-04-23 at 16.03.38.jpeg";
+	"/Users/mathiaslorenceau/Documents/entrepreneurial_projects/Etage/pictures/drop_etage/21.7.24_copy_dev/entries.json";
 
-const test = async () => {
+const doProduct = require("./uiInterface");
+
+const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+(async () => {
+	try {
+		const data = fs.readFileSync(path, "utf8");
+		const entries = JSON.parse(data);
+
+		let counter = 0;
+		for (const entry of entries) {
+			// ------ 1 entry ------
+			let picturePaths = [];
+			Object.keys(entry.pictures).forEach((column) => {
+				if (entry.pictures[column]) {
+					picturePaths.push(entry.pictures[column]);
+				}
+			});
+
+			//picturePaths  picturePaths should contain 3 pictures
+			//console.log(picturePaths, "picturePaths");
+
+			const result = await doProduct(picturePaths);
+			console.log(`Processed entry ID: ${entry.id}`, result);
+
+			await delay(500);
+			counter++;
+		}
+		console.log("DONE");
+	} catch (error) {
+		console.error("Error processing entries:", error);
+	}
+})();
+
+/* const test = async (filePaths) => {
+	console.log(filePaths);
 	const data = fs.readFileSync(path);
 	return data.toString("base64").slice(0, 100); // Return a small part of the picture data
 };
 
-module.exports = test;
+module.exports = test; */
 /* const { GET_LOCATIONS_QUERY } = require("./graphql/queries");
 const client = require("./graphql/client");
 

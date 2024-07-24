@@ -1,7 +1,9 @@
 const { app, BrowserWindow, ipcMain } = require("electron");
 const path = require("path");
+const fs = require("fs");
 const { getProduct } = require("../src/graphql/operations");
 const test = require("../src/debugging");
+const doProduct = require("../src/uiInterface");
 
 function createWindow() {
 	const mainWindow = new BrowserWindow({
@@ -33,7 +35,9 @@ app.on("window-all-closed", () => {
 	}
 });
 
-// IPC handlers
+// -------------------------------- IPC HANDLERS --------------------------------
+// ------------------------------------------------------------------------------
+
 ipcMain.handle("get-product", async (event, productId) => {
 	try {
 		const result = await getProduct(productId);
@@ -43,12 +47,43 @@ ipcMain.handle("get-product", async (event, productId) => {
 	}
 });
 
-// IPC handlers
-ipcMain.handle("get-file", async (event, productId) => {
+ipcMain.handle("get-images", async () => {
+	const dirPath =
+		"/Users/mathiaslorenceau/Documents/entrepreneurial_projects/Etage/pictures/drop_etage/21.7.24_copy_dev/";
+	const files = fs.readdirSync(dirPath);
+	const images = files
+		.filter((file) => file.endsWith(".jpg") || file.endsWith(".jpeg"))
+		.map((file) => path.join(dirPath, file));
+	return images;
+});
+
+ipcMain.handle("get-entries", async () => {
+	const jsonFilePath =
+		"/Users/mathiaslorenceau/Documents/entrepreneurial_projects/Etage/pictures/drop_etage/21.7.24_copy_dev/entries.json";
 	try {
-		const result = await test();
-		return result;
+		if (!fs.existsSync(jsonFilePath)) {
+			fs.writeFileSync(jsonFilePath, JSON.stringify([]));
+		}
+		const data = fs.readFileSync(jsonFilePath, "utf8");
+		return JSON.parse(data);
 	} catch (error) {
+		console.error("Error reading JSON file:", error);
+		return [];
+	}
+});
+
+ipcMain.handle("save-entries", async (event, entries) => {
+	const jsonFilePath =
+		"/Users/mathiaslorenceau/Documents/entrepreneurial_projects/Etage/pictures/drop_etage/21.7.24_copy_dev/entries.json";
+	try {
+		fs.writeFileSync(jsonFilePath, JSON.stringify(entries, null, 2));
+		return { success: true };
+	} catch (error) {
+		console.error("Error writing JSON file:", error);
 		return { success: false, error: error.message };
 	}
+});
+
+ipcMain.handle("create-shopify-entries", async (event, filePaths) => {
+	doProduct(filePaths);
 });
