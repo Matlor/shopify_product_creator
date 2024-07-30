@@ -10,7 +10,7 @@ const {
 	getProductInventoryDetails,
 	getLocationId,
 } = require("./graphql/operations");
-const { defaultProduct } = require("./graphql/shopifyProductDetails");
+const { defaultProduct } = require("./graphql/productInformation");
 const { extractNumericId, encodeGlobalId } = require("./graphql/helpers");
 const { isValidImage, deleteFile, generateShortUniqueId } = require("./utils/fileUtils");
 

@@ -1,9 +1,9 @@
 const { app, BrowserWindow, ipcMain } = require("electron");
 const path = require("path");
 const fs = require("fs");
-const { getProduct } = require("../src/graphql/operations");
-const test = require("../src/debugging");
-const doProduct = require("../src/uiInterface");
+const { getProduct, setStore } = require("../src/graphql/operations");
+const { doProduct, test } = require("../src/uiInterface");
+const { setCurrentClient } = require("../src/graphql/client");
 
 function createWindow() {
 	const mainWindow = new BrowserWindow({
@@ -37,6 +37,10 @@ app.on("window-all-closed", () => {
 
 // -------------------------------- IPC HANDLERS --------------------------------
 // ------------------------------------------------------------------------------
+
+ipcMain.handle("run-test", async () => {
+	return await test();
+});
 
 ipcMain.handle("get-product", async (event, productId) => {
 	try {
@@ -86,4 +90,14 @@ ipcMain.handle("save-entries", async (event, entries) => {
 
 ipcMain.handle("create-shopify-entries", async (event, filePaths) => {
 	doProduct(filePaths);
+});
+
+ipcMain.handle("set-store", async (event, storeCase) => {
+	try {
+		await setStore(storeCase);
+		return { success: true };
+	} catch (error) {
+		console.error("Error setting store:", error);
+		return { success: false, error: error.message };
+	}
 });

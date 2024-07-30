@@ -6,8 +6,11 @@ const {
 	publishProduct,
 	adjustInventory,
 	updateInventoryItem,
+	getProduct,
+	getSerialisedStore,
+	setStore,
 } = require("./graphql/operations");
-const { defaultProduct } = require("./graphql/shopifyProductDetails");
+const { defaultProduct } = require("./graphql/productInformation");
 const { extractNumericId, encodeGlobalId } = require("./graphql/helpers");
 const { isValidImage, deleteFile, generateShortUniqueId } = require("./utils/fileUtils");
 
@@ -20,6 +23,10 @@ WHAT IS NEEDED HERE
 
 
 */
+
+const test = async () => {
+	return getSerialisedStore();
+};
 
 const doProduct = async (filePaths) => {
 	/* 
@@ -108,4 +115,7 @@ const doProduct = async (filePaths) => {
 	}
 };
 
-module.exports = doProduct;
+module.exports = {
+	doProduct,
+	test,
+};

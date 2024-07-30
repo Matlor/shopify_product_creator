@@ -10,5 +10,9 @@ contextBridge.exposeInMainWorld("electron", {
 	getEntries: () => ipcRenderer.invoke("get-entries"),
 	saveEntries: (entries) => ipcRenderer.invoke("save-entries", entries),
 
+	setStore: (storeCase) => ipcRenderer.invoke("set-store", storeCase),
+
 	createShopifyEntries: (filePaths) => ipcRenderer.invoke("create-shopify-entries", filePaths),
+
+	runTest: () => ipcRenderer.invoke("run-test"),
 });

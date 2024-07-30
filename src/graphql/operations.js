@@ -3,7 +3,10 @@ const path = require("path");
 const FormData = require("form-data");
 const fetch = require("cross-fetch");
 const { v4: uuidv4 } = require("uuid");
+
 const client = require("./client");
+const productInformation = require("./productInformation");
+
 const {
 	CREATE_PRODUCT_MUTATION,
 	PUBLISHABLE_PUBLISH_MUTATION,
@@ -17,6 +20,54 @@ const {
 const { GET_PRODUCT_QUERY, GET_PUBLICATIONS_QUERY } = require("./queries");
 const { encodeGlobalId, encodeVariantId, extractNumericId } = require("./helpers");
 
+// ----------------------- GLOBAL STATE-------------------------------
+
+let store = {};
+const setStore = async (storeCase) => {
+	if (storeCase === "etage") {
+		store.client = client.etageClient;
+		store.productInformation = productInformation.etageProductInformation;
+	} else if (storeCase === "michelleTamar") {
+		store.client = client.michelleTamarClient;
+		store.productInformation = productInformation.michelleTamarProductInformation;
+	} else {
+		store = {};
+	}
+};
+
+// Function to get the current store state
+const getSerialisedStore = () => {
+	const getDetailedStoreInfo = (obj, depth = 0, maxDepth = 4) => {
+		if (depth > maxDepth) return "...";
+
+		if (obj === null) return "null";
+		if (typeof obj !== "object") return typeof obj;
+
+		const indent = "  ".repeat(depth);
+		let result = "{\n";
+
+		for (const [key, value] of Object.entries(obj)) {
+			result += `${indent}  ${key}: `;
+			if (typeof value === "object" && value !== null) {
+				result += getDetailedStoreInfo(value, depth + 1, maxDepth);
+			} else if (typeof value === "function") {
+				result += "function";
+			} else if (typeof value === "string") {
+				result += `"${value}"`;
+			} else {
+				result += value;
+			}
+			result += ",\n";
+		}
+
+		result += `${indent}}`;
+		return result;
+	};
+
+	return getDetailedStoreInfo(store);
+};
+
+// -------------------------------------------------------------------
 const uploadFileToStagedURL = async (stagedTarget, file) => {
 	const fileStream = fs.createReadStream(file.path);
 	const formData = new FormData();
@@ -45,11 +96,13 @@ const uploadFileToStagedURL = async (stagedTarget, file) => {
 	}
 };
 
-const createProduct = async (productDetails) => {
+const createProduct = async () => {
+	const client = store.client;
+
 	try {
 		const productResponse = await client.mutate({
 			mutation: CREATE_PRODUCT_MUTATION,
-			variables: { input: productDetails },
+			variables: { input: store.productInformation },
 		});
 
 		if (productResponse.data.productCreate.userErrors.length) {
@@ -63,7 +116,10 @@ const createProduct = async (productDetails) => {
 	}
 };
 
+// Also needs gloabal state to switch between MT and so on
 const publishProduct = async (productId, publicationIds) => {
+	const client = store.client;
+
 	try {
 		const input = publicationIds.map((publicationId) => ({ publicationId }));
 		const publishResponse = await client.mutate({
@@ -78,6 +134,8 @@ const publishProduct = async (productId, publicationIds) => {
 };
 
 const updateProduct = async (productId, productUpdates) => {
+	const client = store.client;
+
 	try {
 		const response = await client.mutate({
 			mutation: UPDATE_PRODUCT_MUTATION,
@@ -96,6 +154,8 @@ const updateProduct = async (productId, productUpdates) => {
 };
 
 const updateVariant = async (variantId, variantUpdates) => {
+	const client = store.client;
+
 	try {
 		const response = await client.mutate({
 			mutation: UPDATE_VARIANT_MUTATION,
@@ -113,7 +173,10 @@ const updateVariant = async (variantId, variantUpdates) => {
 	}
 };
 
+// Also needs gloabal state to switch between MT and so on
 const updateInventoryItem = async (inventoryItemId) => {
+	const client = store.client;
+
 	try {
 		const response = await client.mutate({
 			mutation: INVENTORY_ITEM_UPDATE_MUTATION,
@@ -132,6 +195,8 @@ const updateInventoryItem = async (inventoryItemId) => {
 };
 
 const adjustInventory = async (inventoryItemId, locationId, availableDelta) => {
+	const client = store.client;
+
 	try {
 		const response = await client.mutate({
 			mutation: INVENTORY_ADJUST_QUANTITIES_MUTATION,
@@ -139,7 +204,7 @@ const adjustInventory = async (inventoryItemId, locationId, availableDelta) => {
 				input: {
 					reason: "correction", // Example reason
 					name: "available", // Inventory quantity name
-					referenceDocumentUri: "logistics://some.warehouse/take/2023-01/13", // Example reference document URI
+					referenceDocumentUri: "", // Example reference document URI
 					changes: [
 						{
 							delta: availableDelta,
@@ -162,6 +227,8 @@ const adjustInventory = async (inventoryItemId, locationId, availableDelta) => {
 };
 
 const createStagedUploads = async (file) => {
+	const client = store.client;
+
 	const input = {
 		filename: file.name,
 		mimeType: file.type,
@@ -189,6 +256,8 @@ const createStagedUploads = async (file) => {
 };
 
 const addMediaToProduct = async (productId, media) => {
+	const client = store.client;
+
 	try {
 		const response = await client.mutate({
 			mutation: CREATE_PRODUCT_MEDIA,
@@ -238,6 +307,10 @@ const addPictureToProduct = async (productId, filePath) => {
 };
 
 const getProduct = async (productId) => {
+	const client = store.client;
+
+	console.log(client, "client");
+
 	try {
 		const response = await client.query({
 			query: GET_PRODUCT_QUERY,
@@ -262,6 +335,8 @@ const getProduct = async (productId) => {
 };
 
 const getPublications = async () => {
+	const client = store.client;
+
 	try {
 		const response = await client.query({
 			query: GET_PUBLICATIONS_QUERY,
@@ -295,4 +370,6 @@ module.exports = {
 	getProduct,
 	getPublications,
 	publishProductToPOS,
+	setStore,
+	getSerialisedStore,
 };

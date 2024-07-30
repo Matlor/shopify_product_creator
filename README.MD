@@ -1,7 +1,11 @@
 How to run:
 
+
+
 run backend that creates shopify entries based on watched folder:
 node watchFolder.js
+Or if debugging we can just save and do: node src/debugging.js
+
 
 run frontend:
 npm run electron

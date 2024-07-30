@@ -24,10 +24,6 @@ const PictureGallery = () => {
 	const [dragOverIndex, setDragOverIndex] = useState(null);
 	const [dragOverPosition, setDragOverPosition] = useState(null);
 
-	console.log(pictures, "pictures");
-	console.log(entries, "entries");
-	console.log(removedPictures, "removedPictures");
-
 	// ------ SETS PICS STATE INITIALLY ------
 	useEffect(() => {
 		async function fetchImages() {
